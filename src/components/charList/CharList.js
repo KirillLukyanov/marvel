@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import PropTypes from 'prop-types';
 import MarvelService from '../../services/MarvelService';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
@@ -53,11 +54,25 @@ class CharList extends Component {
         this.setState({ loading: false, error: true });
     };
 
-    renderCharListItem(char) {
+    charRefsArr = [];
+
+    setCharRef = elem => {
+        this.charRefsArr.push(elem);
+    };
+
+    setFocusOnChar(id) {
+        this.charRefsArr.forEach(char => {
+            char.classList.remove('char__item_selected');
+        });
+        this.charRefsArr[id].classList.add('char__item_selected');
+        this.charRefsArr[id].focus();
+    }
+
+    renderCharListItem(char, id) {
         let thumbnailStyle = null;
 
         if (char.thumbnail.includes('image_not_available')) {
-            thumbnailStyle = { objectFit: 'unset' };
+            thumbnailStyle = { objectPosition: 'left' };
         }
 
         if (char.thumbnail.includes('4c002e0305708')) {
@@ -66,9 +81,20 @@ class CharList extends Component {
 
         return (
             <li
+                tabIndex={0}
+                ref={this.setCharRef}
                 key={char.id}
                 className="char__item"
-                onClick={() => this.props.onCharSelected(char.id)}
+                onClick={() => {
+                    this.props.onCharSelected(char.id);
+                    this.setFocusOnChar(id);
+                }}
+                onKeyPress={e => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                        this.props.onCharSelected(char.id);
+                        this.setFocusOnChar(id);
+                    }
+                }}
             >
                 <img
                     style={thumbnailStyle}
@@ -84,8 +110,8 @@ class CharList extends Component {
         const { charList, loading, error, newItemLoading, offset, charEnded } =
             this.state;
 
-        const elements = charList.map(char => {
-            return this.renderCharListItem(char);
+        const elements = charList.map((char, i) => {
+            return this.renderCharListItem(char, i);
         });
 
         const errorMessage = error ? <ErrorMessage /> : null;
@@ -119,5 +145,9 @@ class CharList extends Component {
         );
     }
 }
+
+CharList.propTypes = {
+    onCharSelected: PropTypes.func.isRequired,
+};
 
 export default CharList;
