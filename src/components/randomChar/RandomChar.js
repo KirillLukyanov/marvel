@@ -1,42 +1,32 @@
 import { useState, useEffect } from 'react';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
-import MarvelService from '../../services/MarvelService';
+import useMarvelService from '../../services/MarvelService';
 
 import './randomChar.scss';
 import mjolnir from '../../resources/img/mjolnir.png';
 
 const RandomChar = () => {
     const [char, setChar] = useState({});
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
 
     useEffect(() => {
         updateChar();
+        const timerId = setInterval(() => updateChar, 60000);
+        return () => clearInterval(timerId);
     }, []);
 
-    const marvelService = new MarvelService();
+    const { loading, error, clearError, getCharacter } = useMarvelService();
 
     const onCharLoaded = char => {
         setChar(char);
-        setLoading(false);
-    };
-
-    const onError = () => {
-        setLoading(false);
-        setError(true);
     };
 
     const updateChar = () => {
+        clearError();
         const id = Math.floor(Math.random() * (1011400 - 1011000) + 1011000);
-        marvelService.getCharacter(id).then(onCharLoaded).catch(onError);
+        getCharacter(id).then(onCharLoaded);
     };
 
-    const tryRandomCharHandler = () => {
-        setLoading(true);
-        setError(false);
-        updateChar();
-    };
     const errorMessage = error ? <ErrorMessage /> : null;
     const spinner = loading ? <Spinner /> : null;
     const content = !(loading || error) ? <View char={char} /> : null;
@@ -53,10 +43,7 @@ const RandomChar = () => {
                     Do you want to get to know him better?
                 </p>
                 <p className="randomchar__title">Or choose another one</p>
-                <button
-                    className="button button__main"
-                    onClick={tryRandomCharHandler}
-                >
+                <button className="button button__main" onClick={updateChar}>
                     <div className="inner">try it</div>
                 </button>
                 <img
@@ -72,9 +59,10 @@ const RandomChar = () => {
 const View = ({ char }) => {
     const { name, description, thumbnail, homepage, wiki } = char;
 
-    const thumbnailStyle = thumbnail.includes('image_not_available')
-        ? { objectFit: 'contain' }
-        : null;
+    const thumbnailStyle =
+        thumbnail && thumbnail.includes('image_not_available')
+            ? { objectFit: 'contain' }
+            : null;
 
     return (
         <div className="randomchar__block">

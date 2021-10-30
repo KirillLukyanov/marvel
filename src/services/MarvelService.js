@@ -1,34 +1,32 @@
-class MarvelService {
-    _apiBase = 'https://gateway.marvel.com:443/v1/public/';
-    _apiKey = 'apikey=6bd3bebd9d2a8557bc712adf1db8c28d';
-    _baseOffset = 210;
+import { useHttp } from '../hooks/http.hook';
 
-    getResource = async url => {
-        const res = await fetch(url);
+const useMarvelService = () => {
+    const { loading, error, request, clearError } = useHttp();
 
-        if (!res.ok) {
-            throw new Error(`Could not fetch ${url}, status ${res.status}`);
-        }
+    const _apiBase = 'https://gateway.marvel.com:443/v1/public/';
+    const _apiKey = 'apikey=6bd3bebd9d2a8557bc712adf1db8c28d';
 
-        return await res.json();
-    };
-
-    getAllCharacters = async (offset = this._baseOffset) => {
-        const res = await this.getResource(
-            `${this._apiBase}characters?limit=9&offset=${offset}&${this._apiKey}`
+    const getAllCharacters = async offset => {
+        const res = await request(
+            `${_apiBase}characters?limit=9&offset=${offset}&${_apiKey}`
         );
-        // return res.data.results.map(char => this._transformCharacter(char)); - ниже более короткая запись
-        return res.data.results.map(this._transformCharacter);
+        // return res.data.results.map(char => _transformCharacter(char)); - ниже более короткая запись
+        return res.data.results.map(_transformCharacter);
     };
 
-    getCharacter = async id => {
-        const res = await this.getResource(
-            `${this._apiBase}characters/${id}?${this._apiKey}`
+    const getCharacter = async id => {
+        const res = await request(`${_apiBase}characters/${id}?${_apiKey}`);
+        return _transformCharacter(res.data.results[0]);
+    };
+
+    const getComics = async (offset, limit = '8') => {
+        const res = await request(
+            `${_apiBase}comics?limit=${limit}&offset=${offset}&${_apiKey}`
         );
-        return this._transformCharacter(res.data.results[0]);
+        return res.data.results.map((comic, i) => _transformComics(comic, i));
     };
 
-    _transformCharacter = char => {
+    const _transformCharacter = char => {
         return {
             name: char.name,
             description: char.description
@@ -41,6 +39,24 @@ class MarvelService {
             comics: char.comics.items,
         };
     };
-}
 
-export default MarvelService;
+    const _transformComics = (comic, i) => {
+        return {
+            thumbnail: `${comic.thumbnail.path}.${comic.thumbnail.extension}`,
+            title: comic.title,
+            price: comic.prices[0].price,
+            key: comic.id + i * 10,
+        };
+    };
+
+    return {
+        loading,
+        error,
+        clearError,
+        getAllCharacters,
+        getCharacter,
+        getComics,
+    };
+};
+
+export default useMarvelService;

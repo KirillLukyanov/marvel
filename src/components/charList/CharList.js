@@ -1,34 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import MarvelService from '../../services/MarvelService';
+import useMarvelService from '../../services/MarvelService';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
 import './charList.scss';
 
 const CharList = props => {
     const [charList, setCharList] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    // const [loading, setLoading] = useState(true);
+    // const [error, setError] = useState(false);
     const [newItemLoading, setNewItemLoading] = useState(false);
     const [offset, setOffset] = useState(210);
     const [charEnded, setCharEnded] = useState(false);
 
-    const marvelService = new MarvelService();
+    const { loading, error, getAllCharacters } = useMarvelService();
 
     useEffect(() => {
-        onRequest();
+        onRequest(offset, true);
     }, []);
 
-    const onRequest = offset => {
-        onCharListLoading();
-        marvelService
-            .getAllCharacters(offset)
-            .then(onCharListLoaded)
-            .catch(onError);
-    };
-
-    const onCharListLoading = () => {
-        setNewItemLoading(true);
+    const onRequest = (offset, initial) => {
+        initial ? setNewItemLoading(false) : setNewItemLoading(true);
+        getAllCharacters(offset).then(onCharListLoaded);
     };
 
     const onCharListLoaded = newCharList => {
@@ -38,15 +31,10 @@ const CharList = props => {
             ended = true;
         }
         setCharList([...charList, ...newCharList]);
-        setLoading(false);
+        // setLoading(false);
         setNewItemLoading(false);
         setOffset(offset => offset + 9);
         setCharEnded(ended);
-    };
-
-    const onError = () => {
-        setLoading(false);
-        setError(true);
     };
 
     const charRefsArr = useRef([]);
@@ -106,23 +94,24 @@ const CharList = props => {
     const elements = renderCharListItem(charList);
 
     const errorMessage = error ? <ErrorMessage /> : null;
-    const spinner = loading ? <Spinner /> : null;
-    const content = !(loading || error) ? elements : null;
-    const charListStyle = loading
-        ? {
-              display: 'flex',
-              justifyContent: 'center',
-              //   alignItems: 'center',
-              //   minHeight: 1014,
-          }
-        : null;
+    const spinner = loading && !newItemLoading ? <Spinner /> : null;
+
+    const charListStyle =
+        (loading && !newItemLoading) || error
+            ? {
+                  display: 'flex',
+                  justifyContent: 'center',
+                  //   alignItems: 'center',
+                  //   minHeight: 1014,
+              }
+            : null;
 
     return (
         <div className="char__list">
             <ul className="char__grid" style={charListStyle}>
                 {errorMessage}
                 {spinner}
-                {content}
+                {elements}
             </ul>
             <button
                 disabled={newItemLoading}
