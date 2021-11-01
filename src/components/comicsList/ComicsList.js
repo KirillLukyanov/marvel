@@ -1,4 +1,5 @@
 import useMarvelService from '../../services/MarvelService';
+import { Link } from 'react-router-dom';
 import Spinner from '../spinner/Spinner';
 import ErrorMessage from '../errorMessage/ErrorMessage';
 import { useState, useEffect } from 'react';
@@ -28,7 +29,9 @@ const ComicsList = () => {
     }, []);
 
     const renderComics = comicsArr => {
-        return comicsArr.map(comic => {
+        return comicsArr.map((comic, i) => {
+            const { id, thumbnail, title, price } = comic;
+
             let thumbnailStyle = null;
 
             if (comic.thumbnail.includes('image_not_available')) {
@@ -40,19 +43,19 @@ const ComicsList = () => {
             // }
 
             return (
-                <li className="comics__item" key={comic.key}>
-                    <a href="#">
+                <li className="comics__item" key={i}>
+                    <Link to={`/comics/${id}`}>
                         <img
                             style={thumbnailStyle}
-                            src={comic.thumbnail}
-                            alt={comic.title}
+                            src={thumbnail}
+                            alt={title}
                             className="comics__item-img"
                         />
                         <div className="comics__item-name">{comic.title}</div>
                         <div className="comics__item-price">
-                            {comic.price ? `${comic.price}$` : 'NOT AVAILABLE'}
+                            {price ? `${price}$` : 'NOT AVAILABLE'}
                         </div>
-                    </a>
+                    </Link>
                 </li>
             );
         });
@@ -68,7 +71,7 @@ const ComicsList = () => {
                   display: 'flex',
                   justifyContent: 'center',
                   //   alignItems: 'center',
-                  //   minHeight: 1014,
+                  minHeight: 872,
               }
             : null;
 

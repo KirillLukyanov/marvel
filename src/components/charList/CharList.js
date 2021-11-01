@@ -102,7 +102,7 @@ const CharList = props => {
                   display: 'flex',
                   justifyContent: 'center',
                   //   alignItems: 'center',
-                  //   minHeight: 1014,
+                  minHeight: 1014,
               }
             : null;
 
